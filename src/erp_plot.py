@@ -9,7 +9,7 @@ g = {c: np.mean(R[c], 0) for c in R}
 fig, ax = plt.subplots(1, 3, figsize=(15, 4))
 for i, name in enumerate(["Fz", "Cz", "Pz"]):
     j = ch.index(name)
-    for c, lab in ((0, "frequent"), (1, "target")): ax[i].plot(t * 1e3, g[c][j] * 1e6, label=lab)
+    for c, lab in ((0, "standard"), (1, "target")): ax[i].plot(t * 1e3, g[c][j] * 1e6, label=lab)
     ax[i].axvline(0, c="k", lw=.5); ax[i].set_title(name); ax[i].set_xlabel("ms"); ax[i].set_ylabel("µV")
 ax[0].legend(); plt.suptitle(f"Grand-average ERP (n={len(subs)} subjects)"); plt.tight_layout()
 plt.savefig("../results/erp.png", dpi=130)

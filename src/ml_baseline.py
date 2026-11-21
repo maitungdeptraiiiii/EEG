@@ -44,16 +44,17 @@ MODELS = {
 def evaluate(sub, names=MODELS):
     X, y, *_ = load(sub); X = X.astype(np.float64); out = {}
     for n in names:
-        ba, auc = [], []
+        rows = []
         for tr, te in StratifiedKFold(5, shuffle=True, random_state=0).split(X, y):
             m = MODELS[n]().fit(X[tr], y[tr]); p = m.predict_proba(X[te])[:, 1]
-            ba.append(balanced_accuracy_score(y[te], p > .5)); auc.append(roc_auc_score(y[te], p))
-        out[n] = (float(np.mean(ba)), float(np.mean(auc)))
+            rows.append(metrics(y[te], p))
+        out[n] = mean_metrics(rows)
     return out
 if __name__ == "__main__":
     subs = [int(a) for a in sys.argv[1:]] or subjects()
     import os; F = "../results/ml_within.json"; res = json.load(open(F)) if os.path.exists(F) else {}
     for s in subs:
         if str(s) in res: continue
-        res[str(s)] = evaluate(s); print(s, {k: tuple(round(v, 3) for v in x) for k, x in res[str(s)].items()}, flush=True)
+        res[str(s)] = evaluate(s)
+        print(s, {k: (round(x["ROC-AUC"], 3), round(x["Balanced Accuracy"], 3)) for k, x in res[str(s)].items()}, flush=True)
         json.dump(res, open("../results/ml_within.json", "w"))

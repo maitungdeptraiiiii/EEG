@@ -39,12 +39,12 @@ def fit_predict(name, Xtr, ytr, Xte, epochs=40, lr=1e-3, seed=0):
         if s > best: best, bst = s, copy.deepcopy(model.state_dict())
     model.load_state_dict(bst)
     return prob(model, T(Xte)), model
-def score(y, p): return balanced_accuracy_score(y, p > .5), roc_auc_score(y, p)
+def score(y, p): return {k: float(v) for k, v in metrics(y, p).items()}
 def within(name, sub):
     X, y, *_ = load(sub); r = []
     for tr, te in StratifiedKFold(5, shuffle=True, random_state=0).split(X, y):
-        p, _ = fit_predict(name, X[tr], y[tr], X[te]); r.append(score(y[te], p))
-    return tuple(np.mean(r, 0))
+        p, _ = fit_predict(name, X[tr], y[tr], X[te]); r.append(metrics(y[te], p))
+    return mean_metrics(r)
 def loso(name, test, subs):
     d = {s: load(s) for s in subs}
     Xtr = np.concatenate([d[s][0] for s in subs if s != test]); ytr = np.concatenate([d[s][1] for s in subs if s != test])
@@ -57,5 +57,5 @@ if __name__ == "__main__":
         for s in subs:
             if str(s) in res.get(n, {}): continue
             res.setdefault(n, {})[str(s)] = within(n, s) if mode == "within" else loso(n, s, subjects())
-            print(mode, n, s, tuple(round(float(v), 3) for v in res[n][str(s)]), flush=True)
+            print(mode, n, s, {k: round(v, 3) for k, v in res[n][str(s)].items()}, flush=True)
             json.dump(res, open(F, "w"))
